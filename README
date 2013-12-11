@@ -1,0 +1,164 @@
+Raul Rangel
+4/4/2007
+OS Project 2: rxh shell
+Approximate hours: low 40s. Tell you the truth i kind of lost track of time.
+
+1)	This is an attempt creating my own BASH shell replica. It functions
+	almost like a full BASH shell with the exception of &&, ||, and ;
+	operators. 
+
+2) Dependencies
+	2.1) libreadline
+
+3) Compiling
+	Compile as you would with any other application.
+	# cd src
+	# make
+	# ./rxh
+
+4) Technical Info
+	4.1) File Descriptions
+		4.1.1) wrappers.*
+			These files include basic wrappers for system calls, calling
+			perror and exit on failure.
+		4.1.2) rxLib.*
+			These files contain a non recursive version of quicksort (which
+			was never used), and a couple string searching functions.
+		4.1.3) rxCommand.*
+			This is the heart of the shell, it contains the rxCommand struct, all
+			the command parsing algorithms, and execution algorithms.
+		4.1.4) rxFunctions.*
+			These are all the internal commands that get called by the shell.
+		4.1.5) rxJobs.*
+			These files contain the rxJob and rxJobs structs. These structs are
+			responsible for keeping track of background running processes.
+		4.1.6) rxh.c
+			This is file contains all the readline functionality and is
+			responsible for calling all the other functions. It also sends a
+			process into the background.
+	4.2) Piping and file redirections
+		The rxh shell supports multiple pipes and file redirections of stdout
+		and stdin. All stderr gets output back to the shell and can not be
+		redirected. The valid operators are |, <, >, and >>.
+		4.2.1) The | Operator can be used to pipe stdout from one command into another
+			i.e) # cat catfile| grep really
+		4.2.2) The < Operator is used to pipe a file into a the stdin of a command
+			i.e) # grep really < catfile
+		4.2.3) The > Operator is used to redirect the stdout of a command into a file
+			   overwriting the file, or creating it if it doesn't exist
+			i.e) # grep really catfile > outfile
+		4.2.3) The >> Operator is analogous to the > operator, except that it writes to
+			  the end of the file instead of truncating it
+			i.e) # grep really catfile >> outfile
+		4.2.4) Multiple Operators
+			It is possible to mix and match operators in multiple combinations
+			
+			Using multiple pipes
+			# cat catfile| grep really| sort| head -n 2
+
+			The same result can be achieved using the < operator
+			# grep really < catfile | sort| head -n 2
+			
+			You can also pipe the output into a file using the > or >> operator
+			# grep really < catfile | sort| head -n 2 > outfile
+			
+			This command redirects catfile into the stdin of grep, and appends it to the
+			file outfile
+			# grep really < catfile >> outfile
+
+	4.3) Escape Character
+		The \ character can be used to force the command interpreter to ignore the
+		next character
+		
+		i.e) # echo Hello World \| Foobar
+		The output would be: Hello World | Foobar
+	4.4) Quoting
+		Quoting can be used to pass a string of parameters as one argument to your command.
+		There are two types of quoting, strong and soft quoting.
+		4.4.1) Strong Quoting
+			Strong Quoting mean that nothing inside the quotes will get interpreted by
+			the parser. To strong quote use the ' character
+			
+			i.e) # echo 'Strong   quote  text | \' > $PATH'
+			Outputs: Strong   quote  text | ' > $PATH
+			Notice how the whitespace is preserved
+		4.4.2) Soft Quoting
+			Soft Quoting escapes the redirection operators |, <, >, and >>. It is useful
+			for grouping space separated parameters into one argument.
+			i.e) # echo "Hello World > outfile"
+			Outputs: Hello World > outfile
+		4.4.3) Mixing Quotes
+			Encapsulating a Strong Quote inside a Soft Quote treats the Strong quote as a 
+			normal character.
+
+			i.e) # echo "Don't do that" 
+			Outputs: Don't do that
+			
+	4.4) Environmental Variables
+		Environmental variables consist of alpha numeric characters and the _ character. They
+		are evaluated before execution, so they can be used anywhere in the command line.
+
+		Environmental variables can be set using the export command
+		# export FOO=outfile
+
+		This command will output to the file outfile
+		# grep really < catfile > $FOO
+		
+		This command will output to the file tmpoutfile
+		# grep really < catfile > tmp$FOO
+		
+		You can use the escape character to indicate the end of a variable. This command
+		will output to the file outfile.txt
+		# grep really < catfile > $FOO\.txt
+		
+		Multiple variables can also be concatenated. The output is outfileoutfile
+		# echo $FOO$FOO
+		
+		If you want to print the $ character, it can be done by supplying two $ characters
+		one after the other, or the escape character, or you can use strong quotes.
+		# echo $$FOO or \$FOO 'and $FOO'
+		Outputs: $FOO or $FOO and $FOO
+	4.5) Command Substation
+		Command Substation can be performed by enclosing a command in tick marks(`). The 
+		stdout of the command is placed as an argument on the command line.
+		
+		i.e) # echo `echo Hello World`
+		Outputs: Hello World
+		
+		Command Substations are interpreted like any normal command so they can use file
+		redirections, pipes, and variables
+		
+		i.e) # echo \"`grep really < catfile | sort | head -n 1`\"
+		Outputs: "a my really"
+		
+		It is also possible to have nested Command Substations as long as you escape the
+		` character with a \.
+		
+		i.e) # echo `echo Hello \`echo World\` Again!`
+		Outputs: Hello World Again!
+	4.6) Background Processes
+		Any command can be launched into the background by placing an & at the end of the
+		command. The commands currently executing in the background can be seen with the 
+		jobs command. Once a command finishes you will be notified after you enter another
+		command or blank line. When exit is called, the shell will wait until all
+		background processes are done.
+		
+		i.e) # ./tmp | sort > `echo outfile` &
+			  [1] 9805
+		When the job is launched, the Job ID and pid will be printed
+
+		When executing the jobs command you can see the list of background processes
+		# jobs
+		 [1] running    9805       ./tmp | sort > `echo outfile` &
+
+	4.7) Spaces
+		The command interpreter only requires spaces between arguments. Operators can be
+		don't need any spaces to be interpreted correctly.
+		i.e) # cat catfile | sort > outfile &
+		and  # cat catfile|sort>outfile&
+		get interpreted exactly the same.
+
+Fin
+
+I think this README took longer then the whole project ;)
+btw, I Loved this project. This was probably the best project I have ever done.
